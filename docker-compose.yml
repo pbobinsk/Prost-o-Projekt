@@ -2,13 +2,22 @@ version: '3.8'
 
 
 services:
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: prost-o-projekt-gateway
+    ports:
+      - "3000:3000" # Jedyny publiczny port
+    depends_on:
+      - legacy-monolith
+
   # Zmieniamy nazwę serwisu na bardziej opisową
   legacy-monolith:
     # ZMIANA: Podajemy kontekst budowania
     build: ./services/legacy-monolith
     container_name: prost-o-projekt-monolith
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     volumes:
       - ./services/legacy-monolith:/app
       - /app/node_modules
