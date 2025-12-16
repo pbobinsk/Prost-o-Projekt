@@ -1,0 +1,14 @@
+<%- include('../partials/_header') %>
+
+<h2>Dodaj Nowy Projekt</h2>
+<form action="/projects" method="POST">
+  <label for="title">Tytuł</label>
+  <input type="text" id="title" name="title" required>
+  
+  <label for="description">Opis</label>
+  <textarea id="description" name="description" rows="4"></textarea>
+  
+  <button type="submit">Zapisz Projekt</button>
+</form>
+
+<%- include('../partials/_footer') %>
