@@ -1,25 +1,30 @@
 version: '3.8'
 
+
 services:
-  app:
-    build: .
-    container_name: prost-o-projekt-app
+  # Zmieniamy nazwę serwisu na bardziej opisową
+  legacy-monolith:
+    # ZMIANA: Podajemy kontekst budowania
+    build: ./services/legacy-monolith
+    container_name: prost-o-projekt-monolith
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
+      - ./services/legacy-monolith:/app
       - /app/node_modules
     depends_on:
-      - db
+      - legacy-db
     environment:
-      - DB_HOST=db
+      - DB_HOST=legacy-db
       - DB_USER=admin
       - DB_PASSWORD=secret
       - DB_NAME=prostoprojekt
       - DB_PORT=5432
       - PORT=3000
 
-  db:
+
+  # Zmieniamy nazwę serwisu bazy danych
+  legacy-db:
     image: postgres:14
     container_name: prost-o-projekt-db
     restart: always
