@@ -1,6 +1,5 @@
 const express = require('express');
 const { sequelize, testDbConnection } = require('./config/database');
-const Project = require('./models/Project');
 
 // Inicjalizacja aplikacji
 const app = express();
@@ -10,9 +9,6 @@ const port = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: true })); // Do parsowania danych z formularzy
 app.set('view engine', 'ejs');
 
-// Ścieżki (Routes)
-const projectRoutes = require('./routes/projects');
-app.use('/projects', projectRoutes);
 
 // Strona główna
 app.get('/', (req, res) => {

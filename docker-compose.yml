@@ -44,7 +44,35 @@ services:
       - POSTGRES_PASSWORD=secret
       - POSTGRES_DB=prostoprojekt
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - legacy-db-data:/var/lib/postgresql/data
+
+  project-service:
+    build: ./services/project-service
+    container_name: prost-o-projekt-project-service
+    restart: always
+    volumes:
+      - ./services/project-service:/app
+      - /app/node_modules
+    depends_on:
+      - project-db
+    environment:
+      - DB_HOST=project-db
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - DB_NAME=projects_db
+      - PORT=3000
+  
+  project-db:
+    image: postgres:14
+    container_name: prost-o-projekt-project-db
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=projects_db
+    volumes:
+      - project-db-data:/var/lib/postgresql/data
 
 volumes:
-  db-data:
+  legacy-db-data:
+  project-db-data:
