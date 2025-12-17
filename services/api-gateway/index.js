@@ -3,6 +3,7 @@ const proxy = require('express-http-proxy');
 
 const app = express();
 
+app.use('/api/users', proxy('http://user-service:8000'));
 
 app.use('/api/projects', proxy('http://project-service:3000'));
 

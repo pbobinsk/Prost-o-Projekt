@@ -73,6 +73,16 @@ services:
     volumes:
       - project-db-data:/var/lib/postgresql/data
 
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: prost-o-projekt-user-service
+    restart: always
+    volumes:
+      # Mapujemy kod, aby zmiany były widoczne natychmiast
+      - ./services/user-service:/app
+
 volumes:
   legacy-db-data:
   project-db-data:
