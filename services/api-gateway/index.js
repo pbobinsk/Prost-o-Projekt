@@ -1,7 +1,13 @@
 const express = require('express');
 const proxy = require('express-http-proxy');
+const path = require('path'); // Import modułu 'path' do pracy ze ścieżkami
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors());
+
+app.use('/specs', express.static(path.join(__dirname, 'specs')));
 
 app.use('/api/users', proxy('http://user-service:8000'));
 

@@ -7,9 +7,19 @@ services:
     build: ./services/api-gateway
     container_name: prost-o-projekt-gateway
     ports:
-      - "3000:3000" # Jedyny publiczny port
+      - "3000:3000"
+    env_file:
+      - ./.env
+    volumes:
+      # Mapujemy kod bramy (tak jak było)
+      - ./services/api-gateway:/app
+      - /app/node_modules
+      # NOWE MAPOWANIE: Udostępnij folder ze specyfikacjami wewnątrz kontenera
+      - ./api-specs:/app/specs 
     depends_on:
       - legacy-monolith
+      - project-service
+      - user-service
 
   # Zmieniamy nazwę serwisu na bardziej opisową
   legacy-monolith:
@@ -82,6 +92,17 @@ services:
     volumes:
       # Mapujemy kod, aby zmiany były widoczne natychmiast
       - ./services/user-service:/app
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: prost-o-projekt-swagger-ui
+    ports:
+      - "8080:8080"
+    environment:
+      # Podaj adres URL do specyfikacji, którą Swagger ma wczytać przy starcie
+      - URL=http://api-gateway:3000/specs/project-service-api.yaml
+    depends_on:
+      - api-gateway
 
 volumes:
   legacy-db-data:
