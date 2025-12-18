@@ -4,6 +4,8 @@ from bson import ObjectId
 from database import user_collection
 from security import get_password_hash, verify_password, create_access_token
 from models import UserCreate, Token
+from messaging import send_user_registered_message # NOWY IMPORT
+
 
 app = FastAPI()
 
@@ -25,6 +27,8 @@ async def register_user(user: UserCreate):
     # motor.insert_one również jest asynchroniczne
     new_user = await user_collection.insert_one(user_dict)
     
+    send_user_registered_message(user.email)
+
     # Zwracamy odpowiedź
     return {"id": str(new_user.inserted_id), "email": user.email}
 

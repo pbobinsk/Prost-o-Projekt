@@ -94,8 +94,10 @@ services:
       - ./.env
     environment:
       - MONGO_URI=mongodb://admin:secret@user-db:27017/
+      - RABBITMQ_HOST=rabbitmq # Nowa zmienna środowiskowa
     depends_on:
       - user-db
+      - rabbitmq 
 
   user-db:
     image: mongo:5.0
@@ -117,6 +119,17 @@ services:
       - URL=http://api-gateway:3000/specs/project-service-api.yaml
     depends_on:
       - api-gateway
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine # Używamy lekkiej wersji z panelem
+    container_name: prost-o-projekt-rabbitmq
+    ports:
+      - "5672:5672"  # Port protokołu AMQP, do komunikacji z aplikacjami
+      - "15672:15672" # Port panelu webowego do zarządzania
+    environment:
+      # Domyślne dane logowania, wystarczające na development
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
 
 volumes:
   legacy-db-data:
