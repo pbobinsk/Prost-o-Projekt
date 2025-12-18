@@ -12,6 +12,10 @@ const Project = sequelize.define('Project', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  ownerId: {
+    type: DataTypes.STRING, // Używamy STRING, bo MongoDB ID to string
+    allowNull: false,
+  },
 });
 
 module.exports = Project;

@@ -24,8 +24,20 @@ const authenticateToken = (req, res, next) => {
     }
     // Opcjonalnie: przekaż dane użytkownika do downstream service
     req.user = user;
+    req.headers['x-user-id'] = user.id; 
     next();
   });
+};
+
+const proxyOptions = {
+  proxyReqPathResolver: function (req) {
+    return req.originalUrl;
+  },
+  proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
+    // Przekaż nasz nowy, niestandardowy nagłówek
+    proxyReqOpts.headers['x-user-id'] = srcReq.headers['x-user-id'];
+    return proxyReqOpts;
+  }
 };
 
 app.use(cors());
