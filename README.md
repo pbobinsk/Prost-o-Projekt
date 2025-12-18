@@ -48,10 +48,26 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
 
 ### ➡️ Faza 3: `phase-3-api-first`
 
-**Cel:** Wprowadzenie podejścia API-First oraz mechanizmu uwierzytelniania.
+**Cel:** Wprowadzenie podejścia API-First, uwierzytelniania oraz komunikacji asynchronicznej.
 
 *   **Opis:**
-    Formalizujemy komunikację między serwisami za pomocą kontraktów **OpenAPI**. Rozbudowujemy `user-service` o logikę rejestracji/logowania z użyciem tokenów **JWT**, a `api-gateway` staje się "strażnikiem", który zabezpiecza dostęp do chronionych zasobów.
+    To kluczowa faza profesjonalizacji naszego systemu. Sformalizowaliśmy komunikację między serwisami za pomocą kontraktów **OpenAPI**. Rozbudowaliśmy `user-service` (Python) o logikę rejestracji/logowania z użyciem **MongoDB** i tokenów **JWT**. `API Gateway` stała się "strażnikiem", zabezpieczającym dostęp do chronionych zasobów (`project-service`). Wprowadziliśmy również **komunikację asynchroniczną** z użyciem brokera wiadomości **RabbitMQ**, aby odciążyć proces rejestracji od zadań takich jak wysyłka powiadomień.
+
+*   **Architektura:**
+    *   **Nowe technologie:** MongoDB, RabbitMQ, JWT, OpenAPI.
+    *   **Serwisy:**
+        *   `api-gateway` (z logiką walidacji JWT).
+        *   `user-service` (z bazą MongoDB, logiką JWT, producent wiadomości RabbitMQ).
+        *   `project-service` (zabezpieczony, z logiką autoryzacji `ownerId`).
+        *   `notification-service` (opcja Java/Spring Boot, konsument wiadomości RabbitMQ).
+
+*   **Jak uruchomić i testować?**
+    1.  Przełącz się na tę gałąź: `git checkout phase-3-api-first`
+    2.  Uruchom środowisko: `docker-compose up --build`
+    3.  **Testuj w kliencie API (np. Postman):**
+        *   **Zarejestruj się:** `POST /api/auth/register`
+        *   **Zaloguj się i pobierz token:** `POST /api/auth/login`
+        *   **Użyj tokenu (Bearer Token)** do dostępu do chronionych ścieżek, np. `GET /api/projects`.
 
 ---
 
