@@ -85,13 +85,27 @@ services:
 
 
   user-service:
-    build:
-      context: ./services/user-service
+    build: ./services/user-service
     container_name: prost-o-projekt-user-service
     restart: always
     volumes:
-      # Mapujemy kod, aby zmiany były widoczne natychmiast
       - ./services/user-service:/app
+    env_file:
+      - ./.env
+    environment:
+      - MONGO_URI=mongodb://admin:secret@user-db:27017/
+    depends_on:
+      - user-db
+
+  user-db:
+    image: mongo:5.0
+    container_name: prost-o-projekt-user-db
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    volumes:
+      - user-db-data:/data/db
 
   swagger-ui:
     image: swaggerapi/swagger-ui
@@ -107,3 +121,4 @@ services:
 volumes:
   legacy-db-data:
   project-db-data:
+  user-db-data:

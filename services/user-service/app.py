@@ -1,31 +1,46 @@
-from fastapi import FastAPI, HTTPException
+# services/user-service/app.py
+from fastapi import FastAPI, HTTPException, status
+from bson import ObjectId
+from database import user_collection
+from security import get_password_hash, verify_password, create_access_token
+from models import UserCreate, Token
 
-# Inicjalizacja aplikacji FastAPI
 app = FastAPI()
 
-# Tymczasowa "baza danych" w pamięci, aby zasymulować dane
-# W Fazie 3 zastąpimy to prawdziwą bazą MongoDB
-mock_users_db = [
-    {"id": 1, "name": "Jan Kowalski", "email": "jan.kowalski@example.com"},
-    {"id": 2, "name": "Anna Nowak", "email": "anna.nowak@example.com"},
-    {"id": 3, "name": "Piotr Zieliński", "email": "piotr.zielinski@example.com"},
-]
-
-# Definicja endpointu GET na ścieżce głównej ('/')
-@app.get("/")
-def get_all_users():
-    """Zwraca listę wszystkich użytkowników."""
-    return mock_users_db
-
-# Definicja endpointu GET na ścieżce '/{user_id}'
-@app.get("/{user_id}")
-def get_user_by_id(user_id: int):
-    """Zwraca dane pojedynczego użytkownika na podstawie jego ID."""
-    # Wyszukaj użytkownika na liście
-    user = next((user for user in mock_users_db if user["id"] == user_id), None)
+@app.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def register_user(user: UserCreate):
+    # Sprawdź, czy użytkownik już istnieje
+    # TERAZ TA LINIA JEST POPRAWNA, BO motor.find_one jest asynchroniczne
+    if await user_collection.find_one({"email": user.email}):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Użytkownik o tym emailu już istnieje",
+        )
     
-    if user is None:
-        # Jeśli użytkownik nie został znaleziony, zwróć błąd 404
-        raise HTTPException(status_code=404, detail="Użytkownik nie znaleziony")
+    hashed_password = get_password_hash(user.password)
+    user_dict = user.dict()
+    user_dict["hashed_password"] = hashed_password
+    del user_dict["password"]
     
-    return user
+    # motor.insert_one również jest asynchroniczne
+    new_user = await user_collection.insert_one(user_dict)
+    
+    # Zwracamy odpowiedź
+    return {"id": str(new_user.inserted_id), "email": user.email}
+
+@app.post("/login", response_model=Token)
+async def login_for_access_token(user_credentials: UserCreate):
+    # motor.find_one jest asynchroniczne
+    user = await user_collection.find_one({"email": user_credentials.email})
+    
+    if not user or not verify_password(user_credentials.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nieprawidłowy email lub hasło",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_access_token(
+        data={"sub": user["email"], "id": str(user["_id"])}
+    )
+    return {"access_token": access_token, "token_type": "bearer"}

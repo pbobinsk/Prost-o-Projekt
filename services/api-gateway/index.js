@@ -2,16 +2,41 @@ const express = require('express');
 const proxy = require('express-http-proxy');
 const path = require('path'); // Import modułu 'path' do pracy ze ścieżkami
 const cors = require('cors');
+require('dotenv').config({ path: '../../.env' }); // Wczytaj .env z głównego folderu
+const jwt = require('jsonwebtoken');
 
 const app = express();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Middleware do weryfikacji tokenu JWT
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (token == null) {
+    return res.sendStatus(401); // Unauthorized - brak tokenu
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403); // Forbidden - token nieprawidłowy
+    }
+    // Opcjonalnie: przekaż dane użytkownika do downstream service
+    req.user = user;
+    next();
+  });
+};
 
 app.use(cors());
 
 app.use('/specs', express.static(path.join(__dirname, 'specs')));
 
-app.use('/api/users', proxy('http://user-service:8000'));
+// Ścieżki publiczne (nie wymagają uwierzytelnienia)
+app.use('/api/auth', proxy('http://user-service:8000'));
 
-app.use('/api/projects', proxy('http://project-service:3000'));
+// Ścieżki chronione (wymagają uwierzytelnienia)
+app.use('/api/projects', authenticateToken, proxy('http://project-service:3000'));
 
 app.use('/', proxy('http://legacy-monolith:3000'));
 
