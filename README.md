@@ -76,4 +76,16 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
 **Cel:** Stworzenie nowoczesnego, oddzielonego frontendu jako Single Page Application.
 
 *   **Opis:**
-    Budujemy od zera nowy interfejs użytkownika w technologii **Vue.js**. Aplikacja frontendowa jest całkowicie oddzielona od backendu i komunikuje się z nim wyłącznie przez API, konsumując dane udostępniane przez nasze mikroserwisy.
+    W tej fazie zbudowaliśmy od zera interfejs użytkownika jako **Single Page Application (SPA)**. Aplikacja frontendowa jest całkowicie oddzielona od backendu i komunikuje się z nim wyłącznie przez API Gateway. Wykorzystaliśmy nowoczesny stos technologiczny oparty na **Vue.js** (z Composition API) i **Vite**. Aplikacja obsługuje pełny cykl życia użytkownika: rejestrację, logowanie, zarządzanie sesją (token JWT), a także pełną funkcjonalność **CRUD** (Create, Read, Update, Delete) dla projektów. Routing po stronie klienta jest obsługiwany przez **Vue Router**, a globalne zarządzanie stanem (token, dane użytkownika) przez **Pinia**. W środowisku produkcyjnym, zbudowana aplikacja jest serwowana jako zbiór statycznych plików przez wydajny serwer **Nginx**, który działa również jako **reverse proxy** do naszego backendowego API.
+
+*   **Architektura Frontendu:**
+    *   **Framework:** Vue.js 3
+    *   **Narzędzia:** Vite
+    *   **Routing:** Vue Router
+    *   **Zarządzanie Stanem:** Pinia
+    *   **Serwer:** Nginx
+
+*   **Jak uruchomić?**
+    1.  Przełącz się na tę gałąź: `git checkout phase-4-spa-frontend`
+    2.  Uruchom całe środowisko (backend + frontend): `docker-compose up --build`
+    3.  Otwórz w przeglądarce: **http://localhost** (bez podawania portu).
