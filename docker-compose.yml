@@ -131,6 +131,15 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
 
+  notification-service:
+    build:
+      context: ./services/notification-service
+    container_name: prost-o-projekt-notification-service
+    restart: always
+    depends_on:
+      - rabbitmq
+
+
 volumes:
   legacy-db-data:
   project-db-data:
