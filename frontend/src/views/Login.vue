@@ -27,5 +27,6 @@ const handleLogin = async () => {
       <button type="submit">Zaloguj</button>
     </form>
     <p v-if="error" style="color: red;">{{ error }}</p>
+    <p>Nie masz konta? <router-link to="/register">Zarejestruj się</router-link></p>
   </div>
 </template>

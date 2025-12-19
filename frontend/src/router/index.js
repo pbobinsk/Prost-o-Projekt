@@ -5,10 +5,12 @@ import { useAuthStore } from '../stores/auth';
 // Importuj widoki (które zaraz stworzymy)
 import Projects from '../views/Projects.vue';
 import Login from '../views/Login.vue';
+import Register from '../views/Register.vue'; 
 
 const routes = [
   { path: '/', redirect: '/projects' },
   { path: '/login', name: 'Login', component: Login },
+  { path: '/register', name: 'Register', component: Register },
   { path: '/projects', name: 'Projects', component: Projects, meta: { requiresAuth: true } }
 ];
 

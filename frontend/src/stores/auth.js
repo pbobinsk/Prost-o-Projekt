@@ -31,6 +31,10 @@ export const useAuthStore = defineStore('auth', () => {
     setUser({ id: payload.id, email: payload.sub });
   }
 
+  async function register(credentials) {
+    await axios.post('/api/auth/register', credentials);
+  }
+
   function logout() {
     token.value = null;
     user.value = null;
@@ -39,5 +43,5 @@ export const useAuthStore = defineStore('auth', () => {
     delete axios.defaults.headers.common['Authorization'];
   }
 
-  return { token, user, isAuthenticated, login, logout };
+  return { token, user, isAuthenticated, login, register, logout };
 });
