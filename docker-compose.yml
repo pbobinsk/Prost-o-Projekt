@@ -139,7 +139,19 @@ services:
     depends_on:
       - rabbitmq
 
-
+# NOWY SERWIS: Frontend SPA serwowany przez Nginx
+  frontend:
+    build:
+      context: ./frontend
+    container_name: prost-o-projekt-frontend
+    ports:
+      # Mapujemy standardowy port HTTP 80 z kontenera na port 80 na naszej maszynie
+      # Dzięki temu będziemy wchodzić na http://localhost (bez podawania portu)
+      - "80:80"
+    # Uruchom frontend dopiero, gdy brama API będzie gotowa
+    depends_on:
+      - api-gateway
+      
 volumes:
   legacy-db-data:
   project-db-data:
