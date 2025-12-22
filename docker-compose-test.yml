@@ -1,16 +1,53 @@
 # Ten plik jest przeznaczony tylko do uruchamiania testów
 services:
-  notification-service-test:
+  
+# Serwis, w którym działa nasza APLIKACJA FastAPI na potrzeby testów
+  user-service-app-for-test:
     build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile.dev # Użyj pliku z Mavenem!
-    # Uruchom komendę testową
-    command: mvn test
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev # Używamy obrazu dev, ma wszystkie zależności
+    env_file:
+      - ./.env
+    environment:
+      - MONGO_URI=mongodb://admin:secret@user-db-test:27017/
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - user-db-test
+    networks:
+      - test-network
 
+  # Serwis, w którym działają nasze TESTY PyTest
   user-service-tests:
     build:
       context: ./services/user-service
-      # Mówimy, żeby użył pliku Dockerfile.dev
       dockerfile: Dockerfile.dev
     env_file:
       - ./.env
+    # Nie potrzebuje MONGO_URI, bo nie łączy się z bazą bezpośrednio
+    command: pytest
+    depends_on:
+      - user-service-app-for-test # Upewnij się, że testy startują, gdy aplikacja jest gotowa
+    networks:
+      - test-network
+
+  # Baza danych do testów
+  user-db-test:
+    image: mongo:5.0
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    networks:
+      - test-network
+      
+  # Możesz tu zostawić serwis Javy, jeśli chcesz
+  notification-service-tests:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile.dev
+    command: mvn test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

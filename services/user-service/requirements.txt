@@ -7,3 +7,5 @@ pydantic[email]
 python-dotenv
 pika
 pytest
+httpx
+asgi-lifespan
