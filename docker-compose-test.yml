@@ -1,0 +1,8 @@
+# Ten plik jest przeznaczony tylko do uruchamiania testów
+services:
+  notification-service-test:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile.dev # Użyj pliku z Mavenem!
+    # Uruchom komendę testową
+    command: mvn test

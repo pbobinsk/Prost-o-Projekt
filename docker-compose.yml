@@ -134,6 +134,7 @@ services:
   notification-service:
     build:
       context: ./services/notification-service
+      dockerfile: Dockerfile
     container_name: prost-o-projekt-notification-service
     restart: always
     depends_on:
