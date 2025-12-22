@@ -48,6 +48,32 @@ services:
     networks:
       - test-network
 
+  project-service-tests:
+    build:
+      context: ./services/project-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      # Mapuj kod, ale zostaw node_modules z kontenera
+      - ./services/project-service:/app
+      - /app/node_modules
+    command: npm test
+    environment:
+      - DB_HOST=project-db-test
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - DB_NAME=projects_db_test
+    depends_on:
+      - project-db-test
+
+  # NOWA BAZA do testów integracyjnych
+  project-db-test:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=projects_db_test
+
+
 networks:
   test-network:
     driver: bridge

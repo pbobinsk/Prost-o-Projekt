@@ -1,16 +1,44 @@
 // services/project-service/index.js
+
 const express = require('express');
 const { sequelize, testDbConnection } = require('./config/database');
+const Project = require('./models/Project');
 
 const app = express();
-app.use(express.json()); // Użyj parsera JSON
+const port = process.env.PORT || 3000;
+let server; // Zmienna do przechowywania instancji serwera
+
+app.use(express.json());
 
 const projectRoutes = require('./routes/projects');
-app.use('/', projectRoutes); // Użyj ścieżek bez prefiksu /projects
+app.use('/', projectRoutes);
 
 const startServer = async () => {
   await testDbConnection();
-  await sequelize.sync();
-  app.listen(3000, () => console.log('Project Service running on port 3000'));
+  await sequelize.sync(); 
+  return new Promise((resolve) => {
+    server = app.listen(port, () => {
+      console.log(`Project Service running on port ${port}`);
+      resolve();
+    });
+  });
 };
-startServer();
+
+const stopServer = async () => {
+  return new Promise((resolve) => {
+    if (server) {
+      server.close(() => {
+        console.log('Server stopped');
+        resolve();
+      });
+    }
+  });
+};
+
+// Jeśli plik jest uruchamiany bezpośrednio, uruchom serwer
+if (require.main === module) {
+  startServer();
+}
+
+// Eksportuj aplikację i funkcje do użycia w testach
+module.exports = { app, startServer, stopServer };
