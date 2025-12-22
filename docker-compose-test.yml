@@ -6,3 +6,11 @@ services:
       dockerfile: Dockerfile.dev # Użyj pliku z Mavenem!
     # Uruchom komendę testową
     command: mvn test
+
+  user-service-tests:
+    build:
+      context: ./services/user-service
+      # Mówimy, żeby użył pliku Dockerfile.dev
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./.env
