@@ -73,6 +73,10 @@ services:
       - POSTGRES_PASSWORD=secret
       - POSTGRES_DB=projects_db_test
 
+  frontend-tests:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
 
 networks:
   test-network:
