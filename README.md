@@ -89,3 +89,24 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
     1.  Przełącz się na tę gałąź: `git checkout phase-4-spa-frontend`
     2.  Uruchom całe środowisko (backend + frontend): `docker-compose up --build`
     3.  Otwórz w przeglądarce: **http://localhost** (bez podawania portu).
+
+### ➡️ Faza 5: `phase-5-testing`
+
+**Cel:** Zaimplementowanie kompleksowej strategii testowania dla całego systemu.
+
+#### **Część A: Testy Jednostkowe i Integracyjne (Wewnętrzna Jakość)**
+
+*   **Opis:**
+    W tej części skupiliśmy się na zapewnieniu wewnętrznej jakości każdego serwisu i frontendu. Dla każdego komponentu naszego systemu stworzyliśmy dedykowany zestaw testów, uruchamiany w izolowanym środowisku kontenerowym. Używaliśmy narzędzi specyficznych dla danej technologii, aby przetestować zarówno małe fragmenty logiki (testy jednostkowe), jak i współpracę komponentów wewnątrz serwisu (testy integracyjne).
+
+*   **Zaimplementowane Testy:**
+    *   **`notification-service` (Java):** Testy jednostkowe i integracyjne z użyciem **JUnit 5** i **Mockito**, sprawdzające logikę listenera RabbitMQ.
+    *   **`user-service` (Python):** Testy jednostkowe dla logiki bezpieczeństwa oraz testy integracyjne dla endpointów API z użyciem **PyTest** i **HTTPX**, weryfikujące współpracę z bazą danych MongoDB.
+    *   **`project-service` (Node.js):** Testy jednostkowe dla modelu danych oraz testy integracyjne dla API REST z użyciem **Jest** i **Supertest**, weryfikujące logikę autoryzacji i współpracę z bazą PostgreSQL.
+    *   **`frontend` (Vue.js):** Testy komponentów z użyciem **Vitest** i **Vue Test Utils**, sprawdzające poprawne renderowanie i logikę wewnętrzną widoków.
+
+*   **Jak uruchomić testy?**
+    1.  Przełącz się na tę gałąź: `git checkout phase-5-testing`
+    2.  Użyj dedykowanego pliku `docker-compose.test.yml`, aby uruchomić testy dla wybranego serwisu (lub wszystkich naraz):
+        *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit` (uruchamia wszystkie testy)
+        *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit <nazwa-serwisu-testowego>` (uruchamia testy dla jednego serwisu, np. `frontend-tests`)
