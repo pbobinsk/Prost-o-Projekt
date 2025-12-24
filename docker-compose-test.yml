@@ -29,6 +29,9 @@ services:
       - user-service-app-for-test # Upewnij się, że testy startują, gdy aplikacja jest gotowa
     networks:
       - test-network
+    volumes:
+      # Mapuj folder ze specyfikacjami z hosta do folderu /specs w kontenerze
+      - ./api-specs:/specs
 
   # Baza danych do testów
   user-db-test:

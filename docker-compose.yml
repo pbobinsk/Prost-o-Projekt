@@ -85,8 +85,9 @@ services:
 
 
   user-service:
-    build: ./services/user-service
-    dockerfile: Dockerfile
+    build: 
+      context: ./services/user-service
+      dockerfile: Dockerfile
     container_name: prost-o-projekt-user-service
     restart: always
     volumes:

@@ -9,3 +9,7 @@ pika
 pytest
 httpx
 asgi-lifespan
+pyyaml
+jsonschema 
+openapi-spec-validator
+openapi-schema-validator
