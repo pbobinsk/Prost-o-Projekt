@@ -1,0 +1,141 @@
+{
+  "consumer": {
+    "name": "ProstOProjekt-Frontend"
+  },
+  "interactions": [
+    {
+      "description": "a request to log in",
+      "providerStates": [
+        {
+          "name": "a user with email pact.user@example.com exists"
+        }
+      ],
+      "request": {
+        "body": {
+          "email": "pact.user@example.com",
+          "password": "a.secure.password"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/login"
+      },
+      "response": {
+        "body": {
+          "access_token": "some string",
+          "token_type": "bearer"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.access_token": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to log in with correct credentials",
+      "request": {
+        "body": {
+          "email": "test@example.com",
+          "password": "password123"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/login"
+      },
+      "response": {
+        "body": {
+          "access_token": "some.jwt.token",
+          "token_type": "bearer"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.access_token": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a request to register a new user",
+      "providerStates": [
+        {
+          "name": "no user exists for new.pact.user@example.com"
+        }
+      ],
+      "request": {
+        "body": {
+          "email": "new.pact.user@example.com",
+          "password": "a.very.secure.password"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/register"
+      },
+      "response": {
+        "body": {
+          "email": "new.pact.user@example.com",
+          "id": "507f1f77bcf86cd799439011"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-fA-F]{24}$"
+                }
+              ]
+            }
+          }
+        },
+        "status": 201
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "16.0.4"
+    },
+    "pactRust": {
+      "ffi": "0.4.28",
+      "models": "1.3.5"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "ProstOProjekt-UserService"
+  }
+}

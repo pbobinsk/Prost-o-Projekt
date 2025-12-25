@@ -13,3 +13,4 @@ pyyaml
 jsonschema 
 openapi-spec-validator
 openapi-schema-validator
+pact-python

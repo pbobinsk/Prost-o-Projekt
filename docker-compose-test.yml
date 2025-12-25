@@ -42,6 +42,25 @@ services:
     networks:
       - test-network
       
+  user-service-pact-verifier:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev
+    # Mapujemy folder z kontraktami, aby test miał do niego dostęp
+    volumes:
+      - ./services/user-service/pacts:/app/pacts
+    environment:
+      # Podajemy adres do BAZY DANYCH, a nie do aplikacji
+      - MONGO_URI=mongodb://admin:secret@user-db-test:27017/
+      - PYTHONWARNINGS=ignore::PendingDeprecationWarning
+    # Uruchom tylko i wyłącznie nasz nowy test weryfikacyjny
+    command: pytest tests/test_pact_verification.py
+    depends_on:
+      # Upewnij się, że weryfikacja startuje, gdy aplikacja jest gotowa
+      - user-service-app-for-test
+    networks:
+      - test-network
+
   # Możesz tu zostawić serwis Javy, jeśli chcesz
   notification-service-tests:
     build:
