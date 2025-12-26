@@ -100,6 +100,25 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
 
+  e2e-tests:
+    build:
+      context: ./tests-e2e
+    environment:
+      # Wewnątrz sieci Dockera frontend jest dostępny pod nazwą serwisu 'frontend'
+      - BASE_URL=http://frontend
+    # Musimy podłączyć ten kontener do sieci, w której działa frontend!
+    # Domyślna sieć z docker-compose.yml nazywa się zazwyczaj:
+    # <nazwa-folderu>_default. Sprawdź 'docker network ls'.
+    # Zakładając, że folder to prost-o-projekt:
+      - CI=true
+    networks:
+      - default 
+      - app-network
+
+
 networks:
   test-network:
     driver: bridge
+  app-network:
+    name: prost-o-projekt_default 
+    external: true

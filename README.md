@@ -110,3 +110,51 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
     2.  Użyj dedykowanego pliku `docker-compose.test.yml`, aby uruchomić testy dla wybranego serwisu (lub wszystkich naraz):
         *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit` (uruchamia wszystkie testy)
         *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit <nazwa-serwisu-testowego>` (uruchamia testy dla jednego serwisu, np. `frontend-tests`)
+
+#### **Część B: Testy Kontraktowe (Spójność API)**
+
+*   **Opis:**
+    W tej części wdrożyliśmy testy kontraktowe oparte na konsumencie (**Consumer-Driven Contract Testing**) przy użyciu narzędzia **Pact**. Celem było zapewnienie, że Frontend (Konsument) i User Service (Dostawca) "rozmawiają tym samym językiem", bez konieczności uruchamiania ich razem.
+
+*   **Implementacja:**
+    1.  **Strona Konsumenta (`frontend`):** Napisaliśmy test w Vitest z użyciem Pact JS, który definiuje oczekiwane interakcje (rejestracja, logowanie). Uruchomienie tego testu generuje plik kontraktu (`pact.json`).
+    2.  **Strona Dostawcy (`user-service`):** Stworzyliśmy dedykowany serwis weryfikacyjny w Pythonie. Test ten wczytuje kontrakt i wysyła rzeczywiste żądania do działającej aplikacji FastAPI, uprzednio przygotowując stan bazy danych (np. tworząc wymaganego użytkownika), aby potwierdzić zgodność implementacji z kontraktem.
+
+*   **Jak uruchomić testy kontraktowe?**
+    1.  **Generowanie kontraktu (Frontend):**
+        ```bash
+        cd frontend
+        npm run test:pact
+        ```
+        *(Plik kontraktu zostanie utworzony w folderze `frontend/pacts` - należy go skopiować do `services/user-service/pacts`)*
+
+    2.  **Weryfikacja kontraktu (Backend):**
+        ```bash
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit user-service-pact-verifier
+        ```
+
+#### **Część C: Testy End-to-End (Weryfikacja Całości)**
+
+*   **Opis:**
+    Jako zwieńczenie strategii testowania, zaimplementowaliśmy testy E2E przy użyciu **Playwright**. Testy te traktują system jako "czarną skrzynkę" i wchodzą w interakcję z aplikacją dokładnie tak, jak robiłby to prawdziwy użytkownik – klikając w przyciski i wypełniając formularze w przeglądarce.
+
+*   **Scenariusz Krytyczny (Critical Path):**
+    Automatyczny test weryfikuje pełny przepływ biznesowy przechodzący przez wszystkie warstwy systemu (Frontend -> Nginx -> Gateway -> Mikroserwisy -> Bazy Danych -> RabbitMQ):
+    1.  Rejestracja nowego użytkownika.
+    2.  Logowanie do systemu.
+    3.  Dodanie nowego projektu.
+    4.  Weryfikacja obecności projektu na liście.
+    5.  Usunięcie projektu.
+    6.  Wylogowanie.
+
+*   **Jak uruchomić testy E2E?**
+    Testy te wymagają, aby **cały system** był uruchomiony w trybie produkcyjnym.
+    
+    1.  Uruchom system:
+        ```bash
+        docker-compose up -d --build
+        ```
+    2.  Uruchom testy E2E (w kontenerze Docker):
+        ```bash
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit e2e-tests
+        ```
