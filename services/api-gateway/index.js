@@ -50,8 +50,6 @@ app.use('/api/auth', proxy('http://user-service:8000'));
 // Ścieżki chronione (wymagają uwierzytelnienia)
 app.use('/api/projects', authenticateToken, proxy('http://project-service:3000'));
 
-app.use('/', proxy('http://legacy-monolith:3000'));
-
 app.listen(3000, () => {
   console.log('API Gateway running on port 3000');
 });

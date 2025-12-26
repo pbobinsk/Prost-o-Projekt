@@ -17,44 +17,8 @@ services:
       # NOWE MAPOWANIE: Udostępnij folder ze specyfikacjami wewnątrz kontenera
       - ./api-specs:/app/specs 
     depends_on:
-      - legacy-monolith
       - project-service
       - user-service
-
-  # Zmieniamy nazwę serwisu na bardziej opisową
-  legacy-monolith:
-    # ZMIANA: Podajemy kontekst budowania
-    build: ./services/legacy-monolith
-    container_name: prost-o-projekt-monolith
-    # ports:
-    #   - "3000:3000"
-    volumes:
-      - ./services/legacy-monolith:/app
-      - /app/node_modules
-    depends_on:
-      - legacy-db
-    environment:
-      - DB_HOST=legacy-db
-      - DB_USER=admin
-      - DB_PASSWORD=secret
-      - DB_NAME=prostoprojekt
-      - DB_PORT=5432
-      - PORT=3000
-
-
-  # Zmieniamy nazwę serwisu bazy danych
-  legacy-db:
-    image: postgres:14
-    container_name: prost-o-projekt-db
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=prostoprojekt
-    volumes:
-      - legacy-db-data:/var/lib/postgresql/data
 
   project-service:
     build: ./services/project-service
@@ -156,6 +120,5 @@ services:
       - api-gateway
       
 volumes:
-  legacy-db-data:
   project-db-data:
   user-db-data:
