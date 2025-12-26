@@ -22,6 +22,26 @@
             <version>${karate.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.intuit.karate</groupId>
+            <artifactId>karate-gatling</artifactId>
+            <version>${karate.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-test-framework</artifactId>
+            <version>3.9.5</version> <!-- Sprawdź aktualną wersję Gatlinga -->
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-maven-plugin</artifactId>
+            <version>4.20.16</version> <!-- Sprawdź aktualną wersję pluginu -->
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -33,5 +53,36 @@
                 </excludes>
             </testResource>
         </testResources>
+
+        <plugins>
+            <!-- 1. Plugin do kompilacji Scali (niezbędny, bo LoadSimulation jest w Scali) -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>4.9.8</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 2. Plugin Gatlinga (to on doda opcję w menu) -->
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>4.20.16</version> <!-- Użyj nowszej wersji -->
+                <configuration>
+                    <!-- Wskazujemy klasę symulacji -->
+                    <simulationClass>com.prostoprojekt.LoadSimulation</simulationClass>
+                </configuration>
+            </plugin>
+        </plugins>
+
     </build>
+
+
+
 </project>
