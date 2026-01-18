@@ -1,0 +1,25 @@
+name: API Gateway CI
+
+on:
+  push:
+    branches: [ "main", "phase-*" ]
+    paths:
+      - 'services/api-gateway/**' # Uruchom tylko przy zmianach w bramie
+      - '.github/workflows/api-gateway-ci.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'services/api-gateway/**'
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # To jest nasz "test". Sprawdzamy, czy aplikacja jest budowalna.
+      # Nie wysyłamy jej nigdzie (nie ma 'push'), tylko budujemy.
+      - name: Build Docker Image (Smoke Test)
+        run: docker build ./services/api-gateway
