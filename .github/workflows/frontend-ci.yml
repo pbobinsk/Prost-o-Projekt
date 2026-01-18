@@ -1,0 +1,29 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ "main", "phase-*" ]
+    paths:
+      - 'frontend/**'
+      - 'docker-compose-test.yml'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Component & Pact Tests (Docker)
+        # To uruchomi 'npm test', który w Dockerfile.dev jest domyślną komendą.
+        # Sprawdź, czy w frontend/package.json skrypt "test" uruchamia vitest.
+        # Dodatkowo, jeśli chcesz uruchomić generowanie kontraktów (test:pact),
+        # musielibyśmy nadpisać komendę, ale na razie zostańmy przy unit testach.
+        run: |
+          docker compose -f docker-compose-test.yml up --build --abort-on-container-exit frontend-tests
