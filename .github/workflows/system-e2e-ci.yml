@@ -46,6 +46,14 @@ jobs:
           done
           echo "✅ Frontend działa!"
 
+      - name: 🚨 DEBUG - Check Container Status
+        if: failure() || cancelled() # Uruchom, jeśli Wait zawiedzie
+        run: docker compose -p prost-o-projekt ps -a
+
+      - name: 🚨 DEBUG - Dump All Container Logs
+        if: failure() || cancelled()
+        run: docker compose -p prost-o-projekt logs
+      
       # 4. Uruchamiamy testy E2E (W DOCKERZE)
       # To jest kluczowa zmiana!
       # Używamy tego samego 'docker-compose.test.yml' co lokalnie.
