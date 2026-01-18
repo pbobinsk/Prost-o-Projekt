@@ -32,19 +32,35 @@ jobs:
       - name: Wait for Services
         timeout-minutes: 5
         run: |
-          # Tutaj sprawdzamy localhost, bo curl działa z poziomu runnera (zewnątrz kontenerów)
-          # Porty 3000 i 80 są zmapowane na hosta, więc to zadziała.
-          echo "Czekam na API Gateway..."
-          until curl -s -f -o /dev/null "http://localhost:3000"; do
-            sleep 5
+          echo "Czekam na uruchomienie API Gateway..."
+          # Usuwamy flagę -f. Teraz curl zwróci sukces (exit code 0) nawet przy 404.
+          # Błąd wystąpi tylko, jeśli serwer w ogóle nie odbierze połączenia (Connection Refused).
+          RETRIES=30
+          until curl -s -o /dev/null "http://127.0.0.1:3000"; do
+            echo "Czekam na API Gateway (127.0.0.1:3000)..."
+            sleep 2
+            RETRIES=$((RETRIES-1))
+            if [ $RETRIES -le 0 ]; then
+              echo "BŁĄD: API Gateway nie odpowiada!"
+              docker compose -p prost-o-projekt logs api-gateway
+              exit 1
+            fi
           done
-          echo "✅ API Gateway działa!"
+          echo "✅ API Gateway odpowiada (nawet jeśli 404)!"
 
           echo "Czekam na Frontend..."
-          until curl -s -f -o /dev/null "http://localhost:80"; do
-            sleep 5
+          RETRIES=30
+          until curl -s -o /dev/null "http://127.0.0.1:80"; do
+            echo "Czekam na Frontend (127.0.0.1:80)..."
+            sleep 2
+            RETRIES=$((RETRIES-1))
+            if [ $RETRIES -le 0 ]; then
+              echo "BŁĄD: Frontend nie odpowiada!"
+              docker compose -p prost-o-projekt logs frontend
+              exit 1
+            fi
           done
-          echo "✅ Frontend działa!"
+          echo "✅ Frontend odpowiada!"
 
       - name: 🚨 DEBUG - Check Container Status
         if: failure() || cancelled() # Uruchom, jeśli Wait zawiedzie
