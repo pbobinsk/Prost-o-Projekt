@@ -3,7 +3,7 @@ name: System E2E Tests
 on:
   workflow_dispatch: # Pozwala uruchomić ręcznie przyciskiem
   push:
-    branches: [ "main" ]
+    branches: [ "main" , "phase-*"]
     # Możemy pominąć zmiany w dokumentacji
     paths-ignore:
       - 'README.md'
