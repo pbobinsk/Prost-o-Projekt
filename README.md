@@ -76,4 +76,108 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
 **Cel:** Stworzenie nowoczesnego, oddzielonego frontendu jako Single Page Application.
 
 *   **Opis:**
-    Budujemy od zera nowy interfejs użytkownika w technologii **Vue.js**. Aplikacja frontendowa jest całkowicie oddzielona od backendu i komunikuje się z nim wyłącznie przez API, konsumując dane udostępniane przez nasze mikroserwisy.
+    W tej fazie zbudowaliśmy od zera interfejs użytkownika jako **Single Page Application (SPA)**. Aplikacja frontendowa jest całkowicie oddzielona od backendu i komunikuje się z nim wyłącznie przez API Gateway. Wykorzystaliśmy nowoczesny stos technologiczny oparty na **Vue.js** (z Composition API) i **Vite**. Aplikacja obsługuje pełny cykl życia użytkownika: rejestrację, logowanie, zarządzanie sesją (token JWT), a także pełną funkcjonalność **CRUD** (Create, Read, Update, Delete) dla projektów. Routing po stronie klienta jest obsługiwany przez **Vue Router**, a globalne zarządzanie stanem (token, dane użytkownika) przez **Pinia**. W środowisku produkcyjnym, zbudowana aplikacja jest serwowana jako zbiór statycznych plików przez wydajny serwer **Nginx**, który działa również jako **reverse proxy** do naszego backendowego API.
+
+*   **Architektura Frontendu:**
+    *   **Framework:** Vue.js 3
+    *   **Narzędzia:** Vite
+    *   **Routing:** Vue Router
+    *   **Zarządzanie Stanem:** Pinia
+    *   **Serwer:** Nginx
+
+*   **Jak uruchomić?**
+    1.  Przełącz się na tę gałąź: `git checkout phase-4-spa-frontend`
+    2.  Uruchom całe środowisko (backend + frontend): `docker-compose up --build`
+    3.  Otwórz w przeglądarce: **http://localhost** (bez podawania portu).
+
+### ➡️ Faza 5: `phase-5-testing`
+
+**Cel:** Zaimplementowanie kompleksowej strategii testowania dla całego systemu.
+
+#### **Część A: Testy Jednostkowe i Integracyjne (Wewnętrzna Jakość)**
+
+*   **Opis:**
+    W tej części skupiliśmy się na zapewnieniu wewnętrznej jakości każdego serwisu i frontendu. Dla każdego komponentu naszego systemu stworzyliśmy dedykowany zestaw testów, uruchamiany w izolowanym środowisku kontenerowym. Używaliśmy narzędzi specyficznych dla danej technologii, aby przetestować zarówno małe fragmenty logiki (testy jednostkowe), jak i współpracę komponentów wewnątrz serwisu (testy integracyjne).
+
+*   **Zaimplementowane Testy:**
+    *   **`notification-service` (Java):** Testy jednostkowe i integracyjne z użyciem **JUnit 5** i **Mockito**, sprawdzające logikę listenera RabbitMQ.
+    *   **`user-service` (Python):** Testy jednostkowe dla logiki bezpieczeństwa oraz testy integracyjne dla endpointów API z użyciem **PyTest** i **HTTPX**, weryfikujące współpracę z bazą danych MongoDB.
+    *   **`project-service` (Node.js):** Testy jednostkowe dla modelu danych oraz testy integracyjne dla API REST z użyciem **Jest** i **Supertest**, weryfikujące logikę autoryzacji i współpracę z bazą PostgreSQL.
+    *   **`frontend` (Vue.js):** Testy komponentów z użyciem **Vitest** i **Vue Test Utils**, sprawdzające poprawne renderowanie i logikę wewnętrzną widoków.
+
+*   **Jak uruchomić testy?**
+    1.  Przełącz się na tę gałąź: `git checkout phase-5-testing`
+    2.  Użyj dedykowanego pliku `docker-compose.test.yml`, aby uruchomić testy dla wybranego serwisu (lub wszystkich naraz):
+        *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit` (uruchamia wszystkie testy)
+        *   `docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit <nazwa-serwisu-testowego>` (uruchamia testy dla jednego serwisu, np. `frontend-tests`)
+
+#### **Część B: Testy Kontraktowe (Spójność API)**
+
+*   **Opis:**
+    W tej części wdrożyliśmy testy kontraktowe oparte na konsumencie (**Consumer-Driven Contract Testing**) przy użyciu narzędzia **Pact**. Celem było zapewnienie, że Frontend (Konsument) i User Service (Dostawca) "rozmawiają tym samym językiem", bez konieczności uruchamiania ich razem.
+
+*   **Implementacja:**
+    1.  **Strona Konsumenta (`frontend`):** Napisaliśmy test w Vitest z użyciem Pact JS, który definiuje oczekiwane interakcje (rejestracja, logowanie). Uruchomienie tego testu generuje plik kontraktu (`pact.json`).
+    2.  **Strona Dostawcy (`user-service`):** Stworzyliśmy dedykowany serwis weryfikacyjny w Pythonie. Test ten wczytuje kontrakt i wysyła rzeczywiste żądania do działającej aplikacji FastAPI, uprzednio przygotowując stan bazy danych (np. tworząc wymaganego użytkownika), aby potwierdzić zgodność implementacji z kontraktem.
+
+*   **Jak uruchomić testy kontraktowe?**
+    1.  **Generowanie kontraktu (Frontend):**
+        ```bash
+        cd frontend
+        npm run test:pact
+        ```
+        *(Plik kontraktu zostanie utworzony w folderze `frontend/pacts` - należy go skopiować do `services/user-service/pacts`)*
+
+    2.  **Weryfikacja kontraktu (Backend):**
+        ```bash
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit user-service-pact-verifier
+        ```
+
+#### **Część C: Testy End-to-End (Weryfikacja Całości)**
+
+*   **Opis:**
+    Jako zwieńczenie strategii testowania, zaimplementowaliśmy testy E2E przy użyciu **Playwright**. Testy te traktują system jako "czarną skrzynkę" i wchodzą w interakcję z aplikacją dokładnie tak, jak robiłby to prawdziwy użytkownik – klikając w przyciski i wypełniając formularze w przeglądarce.
+
+*   **Scenariusz Krytyczny (Critical Path):**
+    Automatyczny test weryfikuje pełny przepływ biznesowy przechodzący przez wszystkie warstwy systemu (Frontend -> Nginx -> Gateway -> Mikroserwisy -> Bazy Danych -> RabbitMQ):
+    1.  Rejestracja nowego użytkownika.
+    2.  Logowanie do systemu.
+    3.  Dodanie nowego projektu.
+    4.  Weryfikacja obecności projektu na liście.
+    5.  Usunięcie projektu.
+    6.  Wylogowanie.
+
+*   **Jak uruchomić testy E2E?**
+    Testy te wymagają, aby **cały system** był uruchomiony w trybie produkcyjnym.
+    
+    1.  Uruchom system:
+        ```bash
+        docker-compose up -d --build
+        ```
+    2.  Uruchom testy E2E (w kontenerze Docker):
+        ```bash
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit e2e-tests
+        ```
+
+### ➡️ Faza 6: `phase-6-cicd`
+
+**Cel:** Automatyzacja procesów integracji (CI) i dostarczania (CD) przy użyciu GitHub Actions.
+
+*   **Opis:**
+    Przekształciliśmy ręczne procesy testowania w w pełni zautomatyzowaną "fabrykę oprogramowania". Skonfigurowaliśmy zestaw workflowów GitHub Actions, które reagują na zmiany w repozytorium, uruchamiając odpowiednie testy w izolowanych środowiskach Dockerowych. Zastosowaliśmy strategię **Monorepo**, dzięki której zmiany w konkretnym katalogu serwisu wyzwalają tylko powiązane z nim testy, co optymalizuje czas i zasoby.
+
+*   **Zaimplementowane Workflowy (CI):**
+    1.  **Microservice CI:** Niezależne potoki dla każdego serwisu (`project-service`, `user-service`, `notification-service`, `frontend`). Każdy z nich buduje kontener testowy i uruchamia w nim testy jednostkowe, integracyjne oraz (w przypadku `user-service`) weryfikację kontraktów Pact.
+    2.  **System E2E CI:** Zaawansowany workflow integracyjny, który:
+        *   Tworzy dynamicznie pliki konfiguracyjne (`.env`).
+        *   Uruchamia cały system w trybie produkcyjnym przy użyciu `docker compose`.
+        *   Wykonuje skrypty **Healthcheck** (pętle `curl`), aby upewnić się, że bazy danych i serwisy są w pełni gotowe do pracy.
+        *   Uruchamia testy **Playwright** na działającej w chmurze infrastrukturze.
+
+*   **Kluczowe Techniki:**
+    *   **Path Filtering:** Użycie filtrów `paths` w plikach YAML, aby unikać niepotrzebnych uruchomień.
+    *   **Parity:** Użycie tych samych plików `docker-compose.test.yml` w CI, co lokalnie, zapewniając spójność środowisk.
+    *   **Resilience:** Rozwiązanie problemów "Race Conditions" poprzez dodanie healthchecków dla baz danych i skryptów oczekujących na start usług HTTP.
+
+*   **Status:**
+    Każdy `git push` jest teraz automatycznie weryfikowany. Zielony "ptaszek" przy commicie oznacza, że system jest spójny i gotowy do dalszych działań.
