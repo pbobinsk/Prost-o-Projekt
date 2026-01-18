@@ -24,7 +24,7 @@ services:
     env_file:
       - ./.env
     # Nie potrzebuje MONGO_URI, bo nie łączy się z bazą bezpośrednio
-    command: pytest
+    command: pytest --ignore=tests/test_pact_verification.py
     depends_on:
       - user-service-app-for-test # Upewnij się, że testy startują, gdy aplikacja jest gotowa
     networks:

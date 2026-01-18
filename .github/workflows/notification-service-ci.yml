@@ -1,0 +1,27 @@
+name: Notification Service CI
+
+on:
+  push:
+    branches: [ "main", "phase-*" ]
+    paths:
+      - 'services/notification-service/**'
+      - 'docker-compose-test.yml'
+      - '.github/workflows/notification-service-ci.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'services/notification-service/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Java potrzebuje więcej pamięci i czasu, Docker sobie z tym poradzi,
+      # ale warto wiedzieć, że tu budujemy obraz z Mavenem.
+      - name: Run Tests (Docker)
+        run: |
+          docker compose -f docker-compose-test.yml up --build --abort-on-container-exit notification-service-tests
