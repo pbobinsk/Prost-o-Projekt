@@ -37,15 +37,18 @@ test('Pełny przepływ użytkownika: Rejestracja, Logowanie, CRUD Projektu', asy
   await page.fill('input#title', projectName);
   await page.fill('textarea#description', 'To jest testowy projekt utworzony przez Playwright');
   
+  
   const createProjectResponsePromise = page.waitForResponse(response => 
     response.url().includes('/api/projects') && 
-    response.request().method() === 'POST' &&
-    (response.status() === 201 || response.status() === 200)
+    response.request().method() === 'POST'
   );
 
   await page.getByRole('button', { name: 'Dodaj projekt' }).click();
 
-  await createProjectResponsePromise;
+  const response = await createProjectResponsePromise;
+  
+  // Teraz sprawdzamy status. Jeśli będzie 401, test padnie tu i od razu powie dlaczego.
+  expect([200, 201]).toContain(response.status());
 
   // 6. Weryfikacja, czy projekt pojawił się na liście
   // Szukamy elementu listy, który zawiera nasz tytuł
