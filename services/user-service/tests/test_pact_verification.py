@@ -52,7 +52,7 @@ def test_pact_verification():
         os.path.dirname(__file__), 
         '..', 
         'pacts', 
-        'prostoprojekt-frontend-prostoprojekt-userservice.json'
+        'ProstOProjekt-Frontend-ProstOProjekt-UserService.json'
     )
 
     # Weryfikacja
