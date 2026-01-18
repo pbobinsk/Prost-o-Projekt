@@ -28,7 +28,8 @@ services:
       - ./services/project-service:/app
       - /app/node_modules
     depends_on:
-      - project-db
+      - project-db:
+        condition: service_healthy
     environment:
       - DB_HOST=project-db
       - DB_USER=admin
