@@ -158,3 +158,26 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
         ```bash
         docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit e2e-tests
         ```
+
+### ➡️ Faza 6: `phase-6-cicd`
+
+**Cel:** Automatyzacja procesów integracji (CI) i dostarczania (CD) przy użyciu GitHub Actions.
+
+*   **Opis:**
+    Przekształciliśmy ręczne procesy testowania w w pełni zautomatyzowaną "fabrykę oprogramowania". Skonfigurowaliśmy zestaw workflowów GitHub Actions, które reagują na zmiany w repozytorium, uruchamiając odpowiednie testy w izolowanych środowiskach Dockerowych. Zastosowaliśmy strategię **Monorepo**, dzięki której zmiany w konkretnym katalogu serwisu wyzwalają tylko powiązane z nim testy, co optymalizuje czas i zasoby.
+
+*   **Zaimplementowane Workflowy (CI):**
+    1.  **Microservice CI:** Niezależne potoki dla każdego serwisu (`project-service`, `user-service`, `notification-service`, `frontend`). Każdy z nich buduje kontener testowy i uruchamia w nim testy jednostkowe, integracyjne oraz (w przypadku `user-service`) weryfikację kontraktów Pact.
+    2.  **System E2E CI:** Zaawansowany workflow integracyjny, który:
+        *   Tworzy dynamicznie pliki konfiguracyjne (`.env`).
+        *   Uruchamia cały system w trybie produkcyjnym przy użyciu `docker compose`.
+        *   Wykonuje skrypty **Healthcheck** (pętle `curl`), aby upewnić się, że bazy danych i serwisy są w pełni gotowe do pracy.
+        *   Uruchamia testy **Playwright** na działającej w chmurze infrastrukturze.
+
+*   **Kluczowe Techniki:**
+    *   **Path Filtering:** Użycie filtrów `paths` w plikach YAML, aby unikać niepotrzebnych uruchomień.
+    *   **Parity:** Użycie tych samych plików `docker-compose.test.yml` w CI, co lokalnie, zapewniając spójność środowisk.
+    *   **Resilience:** Rozwiązanie problemów "Race Conditions" poprzez dodanie healthchecków dla baz danych i skryptów oczekujących na start usług HTTP.
+
+*   **Status:**
+    Każdy `git push` jest teraz automatycznie weryfikowany. Zielony "ptaszek" przy commicie oznacza, że system jest spójny i gotowy do dalszych działań.
