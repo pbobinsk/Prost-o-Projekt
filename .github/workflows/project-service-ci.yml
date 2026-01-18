@@ -5,7 +5,7 @@ on:
     branches: [ "main", "phase-*" ]
     paths:
       - 'services/project-service/**'        # Tylko zmiany w tym serwisie
-      - 'docker-compose.test.yml'            # Lub w konfiguracji testowej
+      - 'docker-compose-test.yml'            # Lub w konfiguracji testowej
       - '.github/workflows/project-service-ci.yml'
   pull_request:
     branches: [ "main" ]
