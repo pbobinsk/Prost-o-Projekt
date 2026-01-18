@@ -1,10 +1,9 @@
-name: System E2E Tests
+name: System E2E Tests (Dockerized)
 
 on:
-  workflow_dispatch: # Pozwala uruchomić ręcznie przyciskiem
+  workflow_dispatch:
   push:
-    branches: [ "main" , "phase-*"]
-    # Możemy pominąć zmiany w dokumentacji
+    branches: [ "main", "phase-*" ]
     paths-ignore:
       - 'README.md'
       - 'docs/**'
@@ -17,49 +16,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Przygotowanie środowiska
-      # Musimy stworzyć plik .env dla docker-compose
+      # 1. Tworzymy .env (nadal potrzebny dla aplikacji)
       - name: Create .env file
         run: |
           echo "JWT_SECRET=ci-secret-key-123" > .env
-          echo "BASE_URL=http://localhost" >> .env # Dla Playwrighta
+          # WAŻNE: Wewnątrz sieci Dockera frontend to 'http://frontend', a nie localhost!
+          echo "BASE_URL=http://frontend" >> .env 
 
-      # 2. Instalacja Playwright (niezbędne przeglądarki)
-      # Robimy to na maszynie hosta (runnerze), żeby nie bawić się w Docker-in-Docker dla testów
-      - name: Install Playwright & Dependencies
-        working-directory: ./tests-e2e
+      # 2. Uruchamiamy system (Aplikację)
+      # Używamy flagi '-p', aby nazwa sieci była stała: 'prost-o-projekt_default'
+      - name: Start System
+        run: docker compose -p prost-o-projekt up -d --build
+
+      # 3. Czekamy na gotowość (Twój skrypt healthcheck)
+      - name: Wait for Services
+        timeout-minutes: 5
         run: |
-          npm ci
-          npx playwright install --with-deps
+          # Tutaj sprawdzamy localhost, bo curl działa z poziomu runnera (zewnątrz kontenerów)
+          # Porty 3000 i 80 są zmapowane na hosta, więc to zadziała.
+          echo "Czekam na API Gateway..."
+          until curl -s -f -o /dev/null "http://localhost:3000"; do
+            sleep 5
+          done
+          echo "✅ API Gateway działa!"
 
-      # 3. Uruchomienie Całego Systemu
-      # Używamy głównego pliku docker-compose.yml
-      - name: Start System (Docker Compose)
+          echo "Czekam na Frontend..."
+          until curl -s -f -o /dev/null "http://localhost:80"; do
+            sleep 5
+          done
+          echo "✅ Frontend działa!"
+
+      # 4. Uruchamiamy testy E2E (W DOCKERZE)
+      # To jest kluczowa zmiana!
+      # Używamy tego samego 'docker-compose.test.yml' co lokalnie.
+      # Podpinamy się pod ten sam projekt (-p prost-o-projekt), żeby widzieć sieć.
+      - name: Run Playwright Tests (Docker)
         run: |
-          docker compose up -d --build
-          # Dajmy chwilę, żeby bazy danych i serwisy wstały
-          sleep 15 
+          docker compose -p prost-o-projekt -f docker-compose-test.yml run --rm e2e-tests
 
-      # 4. Sprawdzenie, czy kontenery działają (Debug)
-      - name: Check running containers
-        run: docker ps -a
-
-      # 5. Uruchomienie testów E2E (Playwright)
-      # Łączą się z localhost:80 (Nginx), który przekierowuje do kontenerów
-      - name: Run Playwright Tests
-        working-directory: ./tests-e2e
-        run: npx playwright test
-
-      # 6. (Opcjonalnie) Zapisanie raportu w razie błędów
-      - name: Upload Playwright Report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: tests-e2e/playwright-report/
-          retention-days: 7
-          
-      # 7. Wyświetlenie logów kontenerów w razie błędu (Kluczowe do debugowania!)
+      # 5. Logi w razie błędu
       - name: Dump Docker Logs
         if: failure()
-        run: docker compose logs
+        run: docker compose -p prost-o-projekt logs

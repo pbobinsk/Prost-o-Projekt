@@ -111,6 +111,7 @@ services:
     # <nazwa-folderu>_default. Sprawdź 'docker network ls'.
     # Zakładając, że folder to prost-o-projekt:
       - CI=true
+      - DEBUG=pw:api
     networks:
       - default 
       - app-network
