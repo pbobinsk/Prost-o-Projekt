@@ -36,7 +36,16 @@ test('Pełny przepływ użytkownika: Rejestracja, Logowanie, CRUD Projektu', asy
   // 5. Dodanie Projektu
   await page.fill('input#title', projectName);
   await page.fill('textarea#description', 'To jest testowy projekt utworzony przez Playwright');
+  
+  const createProjectResponsePromise = page.waitForResponse(response => 
+    response.url().includes('/api/projects') && 
+    response.request().method() === 'POST' &&
+    (response.status() === 201 || response.status() === 200)
+  );
+
   await page.getByRole('button', { name: 'Dodaj projekt' }).click();
+
+  await createProjectResponsePromise;
 
   // 6. Weryfikacja, czy projekt pojawił się na liście
   // Szukamy elementu listy, który zawiera nasz tytuł
