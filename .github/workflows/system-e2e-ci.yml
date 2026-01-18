@@ -1,0 +1,65 @@
+name: System E2E Tests
+
+on:
+  workflow_dispatch: # Pozwala uruchomić ręcznie przyciskiem
+  push:
+    branches: [ "main" ]
+    # Możemy pominąć zmiany w dokumentacji
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Przygotowanie środowiska
+      # Musimy stworzyć plik .env dla docker-compose
+      - name: Create .env file
+        run: |
+          echo "JWT_SECRET=ci-secret-key-123" > .env
+          echo "BASE_URL=http://localhost" >> .env # Dla Playwrighta
+
+      # 2. Instalacja Playwright (niezbędne przeglądarki)
+      # Robimy to na maszynie hosta (runnerze), żeby nie bawić się w Docker-in-Docker dla testów
+      - name: Install Playwright & Dependencies
+        working-directory: ./tests-e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      # 3. Uruchomienie Całego Systemu
+      # Używamy głównego pliku docker-compose.yml
+      - name: Start System (Docker Compose)
+        run: |
+          docker compose up -d --build
+          # Dajmy chwilę, żeby bazy danych i serwisy wstały
+          sleep 15 
+
+      # 4. Sprawdzenie, czy kontenery działają (Debug)
+      - name: Check running containers
+        run: docker ps -a
+
+      # 5. Uruchomienie testów E2E (Playwright)
+      # Łączą się z localhost:80 (Nginx), który przekierowuje do kontenerów
+      - name: Run Playwright Tests
+        working-directory: ./tests-e2e
+        run: npx playwright test
+
+      # 6. (Opcjonalnie) Zapisanie raportu w razie błędów
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests-e2e/playwright-report/
+          retention-days: 7
+          
+      # 7. Wyświetlenie logów kontenerów w razie błędu (Kluczowe do debugowania!)
+      - name: Dump Docker Logs
+        if: failure()
+        run: docker compose logs
