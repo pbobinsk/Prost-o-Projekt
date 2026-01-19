@@ -4,7 +4,7 @@ version: '3.8'
 services:
 
   api-gateway:
-    image: ghcr.io/pbobinsk/prost-o-projekt-api-gateway:sha-d8c3138
+    image: ghcr.io/pbobinsk/prost-o-projekt-api-gateway:latest
     container_name: prost-o-projekt-gateway
     ports:
       - "3000:3000"
@@ -21,7 +21,7 @@ services:
       - user-service
 
   project-service:
-    image: ghcr.io/pbobinsk/prost-o-projekt-project-service:sha-40b4f12
+    image: ghcr.io/pbobinsk/prost-o-projekt-project-service:latest
     container_name: prost-o-projekt-project-service
     restart: always
     volumes:
@@ -55,7 +55,7 @@ services:
 
 
   user-service:
-    image: ghcr.io/pbobinsk/prost-o-projekt-user-service:sha-ead50ab
+    image: ghcr.io/pbobinsk/prost-o-projekt-user-service:latest
     container_name: prost-o-projekt-user-service
     restart: always
     volumes:
@@ -102,7 +102,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
 
   notification-service:
-    image: ghcr.io/pbobinsk/prost-o-projekt-notification-service:sha-37ee737
+    image: ghcr.io/pbobinsk/prost-o-projekt-notification-service:latest
     container_name: prost-o-projekt-notification-service
     restart: always
     depends_on:
@@ -110,7 +110,7 @@ services:
 
 # NOWY SERWIS: Frontend SPA serwowany przez Nginx
   frontend:
-    image: ghcr.io/pbobinsk/prost-o-projekt-frontend:sha-184d9c0
+    image: ghcr.io/pbobinsk/prost-o-projekt-frontend:latest
     container_name: prost-o-projekt-frontend
     ports:
       # Mapujemy standardowy port HTTP 80 z kontenera na port 80 na naszej maszynie
