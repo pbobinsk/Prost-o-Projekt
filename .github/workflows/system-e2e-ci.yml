@@ -9,6 +9,8 @@ on:
       - 'docs/**'
       - '.github/workflows/*-cd.yml' 
       - '.github/workflows/*-ci.yml'
+      - 'docker-compose-prod.yml'
+      
 
 jobs:
   e2e-tests:

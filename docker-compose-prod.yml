@@ -112,7 +112,7 @@ services:
 
 # NOWY SERWIS: Frontend SPA serwowany przez Nginx
   frontend:
-    image: 
+    image: ghcr.io/pbobinsk/prost-o-projekt-frontend:sha-184d9c0
     container_name: prost-o-projekt-frontend
     ports:
       # Mapujemy standardowy port HTTP 80 z kontenera na port 80 na naszej maszynie
