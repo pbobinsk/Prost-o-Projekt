@@ -181,3 +181,32 @@ Każda faza ewolucji projektu znajduje się na osobnej, niezależnej gałęzi. A
 
 *   **Status:**
     Każdy `git push` jest teraz automatycznie weryfikowany. Zielony "ptaszek" przy commicie oznacza, że system jest spójny i gotowy do dalszych działań.
+
+
+* **Zaimplementowane Workflowy (CD - Continuous Delivery):**
+
+1.  **Build & Publish:** Dla każdego serwisu skonfigurowaliśmy osobny workflow (np. `project-service-cd.yml`), który:
+    *   Uruchamia się po pomyślnym przejściu testów (lub równolegle przy wdrożeniu na `main`).
+    *   Zbuduje zoptymalizowany, produkcyjny obraz Docker (wykorzystując multi-stage builds).
+    *   Loguje się do **GitHub Container Registry (GHCR)** w sposób bezpieczny, używając `GITHUB_TOKEN`.
+    *   Wypycha gotowy obraz do rejestru, stosując strategię **Smart Tagging**: obrazy są oznaczane tagami `latest` (dla gałęzi głównej), nazwą gałęzi oraz unikalnym skrótem commita (SHA), co zapewnia pełną identyfikowalność wersji.
+
+* **Symulacja Wdrożenia (Continuous Deployment):**
+
+*   **Produkcyjna Orkiestracja:** Stworzyliśmy plik `docker-compose.prod.yml`.
+    *   W przeciwieństwie do wersji deweloperskiej, ten plik **nie buduje** kodu lokalnie (`build: .`).
+    *   Zamiast tego, pobiera gotowe, przetestowane obrazy bezpośrednio z rejestru GHCR (`image: ghcr.io/...`).
+*   **Zero-Config Deployment:** Dzięki temu podejściu, wdrożenie nowej wersji na serwerze sprowadza się do pobrania najnowszych obrazów (`docker compose pull`) i restartu kontenerów. Nie wymaga to obecności kodu źródłowego, kompilatorów ani narzędzi takich jak Maven czy Node.js na serwerze produkcyjnym.
+
+### **Jak uruchomić wersję "produkcyjną" lokalnie?**
+
+Aby przetestować proces wdrożenia (symulując serwer produkcyjny):
+
+1.  Zaloguj się do rejestru (jeśli obrazy są prywatne):
+    ```bash
+    docker login ghcr.io -u TWOJ_USERNAME
+    ```
+2.  Uruchom system w trybie produkcyjnym:
+    ```bash
+    docker compose -f docker-compose.prod.yml up -d
+    ```
