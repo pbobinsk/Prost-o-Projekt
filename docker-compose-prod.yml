@@ -1,0 +1,125 @@
+version: '3.8'
+
+
+services:
+
+  api-gateway:
+    image: ghcr.io/pbobinsk/prost-o-projekt-api-gateway:sha-d8c3138
+    container_name: prost-o-projekt-gateway
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    volumes:
+      # Mapujemy kod bramy (tak jak było)
+      - ./services/api-gateway:/app
+      - /app/node_modules
+      # NOWE MAPOWANIE: Udostępnij folder ze specyfikacjami wewnątrz kontenera
+      - ./api-specs:/app/specs 
+    depends_on:
+      - project-service
+      - user-service
+
+  project-service:
+    image: ghcr.io/pbobinsk/prost-o-projekt-project-service:sha-40b4f12
+    container_name: prost-o-projekt-project-service
+    restart: always
+    volumes:
+      - ./services/project-service:/app
+      - /app/node_modules
+    depends_on:
+      project-db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=project-db
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - DB_NAME=projects_db
+      - PORT=3000
+  
+  project-db:
+    image: postgres:14
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d prostoprojekt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: prost-o-projekt-project-db
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=projects_db
+    volumes:
+      - project-db-prod-data:/var/lib/postgresql/data
+
+
+  user-service:
+    image: ghcr.io/pbobinsk/prost-o-projekt-user-service:sha-ead50ab
+    container_name: prost-o-projekt-user-service
+    restart: always
+    volumes:
+      - ./services/user-service:/app
+    env_file:
+      - ./.env
+    environment:
+      - MONGO_URI=mongodb://admin:secret@user-db:27017/
+      - RABBITMQ_HOST=rabbitmq # Nowa zmienna środowiskowa
+    depends_on:
+      - user-db
+      - rabbitmq 
+
+  user-db:
+    image: mongo:5.0
+    container_name: prost-o-projekt-user-db
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    volumes:
+      - user-db-prod-data:/data/db
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: prost-o-projekt-swagger-ui
+    ports:
+      - "8080:8080"
+    environment:
+      # Podaj adres URL do specyfikacji, którą Swagger ma wczytać przy starcie
+      - URL=http://api-gateway:3000/specs/project-service-api.yaml
+    depends_on:
+      - api-gateway
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine # Używamy lekkiej wersji z panelem
+    container_name: prost-o-projekt-rabbitmq
+    ports:
+      - "5672:5672"  # Port protokołu AMQP, do komunikacji z aplikacjami
+      - "15672:15672" # Port panelu webowego do zarządzania
+    environment:
+      # Domyślne dane logowania, wystarczające na development
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
+  notification-service:
+    image: ghcr.io/pbobinsk/prost-o-projekt-notification-service:sha-37ee737
+    container_name: prost-o-projekt-notification-service
+    restart: always
+    depends_on:
+      - rabbitmq
+
+# NOWY SERWIS: Frontend SPA serwowany przez Nginx
+  frontend:
+    image: ghcr.io/pbobinsk/prost-o-projekt-frontend:sha-184d9c0
+    container_name: prost-o-projekt-frontend
+    ports:
+      # Mapujemy standardowy port HTTP 80 z kontenera na port 80 na naszej maszynie
+      # Dzięki temu będziemy wchodzić na http://localhost (bez podawania portu)
+      - "80:80"
+    # Uruchom frontend dopiero, gdy brama API będzie gotowa
+    depends_on:
+      - api-gateway
+      
+volumes:
+  project-db-prod-data:
+  user-db-prod-data:

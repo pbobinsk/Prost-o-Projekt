@@ -1,0 +1,159 @@
+# api-specs/project-service-api.yaml
+
+openapi: 3.0.3
+info:
+  title: Project Service API
+  description: API do zarządzania projektami. Wszystkie endpointy wymagają uwierzytelnienia.
+  version: 1.0.0
+
+# Definicja globalnych zabezpieczeń dla całego API
+security:
+  - bearerAuth: []
+
+paths:
+  /api/projects:
+    get:
+      summary: Pobierz listę wszystkich projektów
+      responses:
+        '200':
+          description: Lista projektów
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      summary: Stwórz nowy projekt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Projekt utworzony pomyślnie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/projects/{projectId}:
+    get:
+      summary: Pobierz projekt po jego ID
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dane projektu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      summary: Zaktualizuj istniejący projekt
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '200':
+          description: Projekt zaktualizowany
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      summary: Usuń projekt
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Projekt usunięty pomyślnie (brak treści)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+# Reużywalne komponenty
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ProjectCreate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+      required:
+        - title
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+
+  responses:
+    UnauthorizedError:
+      description: Błąd uwierzytelnienia (brak lub nieprawidłowy token JWT)
+    NotFoundError:
+      description: Zasób nie został znaleziony
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Błędne żądanie (np. brakujące pole)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 *.class
 *.pyc
+__pycache__
+
+tests-karate/target

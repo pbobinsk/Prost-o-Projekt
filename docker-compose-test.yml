@@ -1,0 +1,125 @@
+# Ten plik jest przeznaczony tylko do uruchamiania testów
+services:
+  
+# Serwis, w którym działa nasza APLIKACJA FastAPI na potrzeby testów
+  user-service-app-for-test:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev # Używamy obrazu dev, ma wszystkie zależności
+    env_file:
+      - ./.env
+    environment:
+      - MONGO_URI=mongodb://admin:secret@user-db-test:27017/
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - user-db-test
+    networks:
+      - test-network
+
+  # Serwis, w którym działają nasze TESTY PyTest
+  user-service-tests:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./.env
+    # Nie potrzebuje MONGO_URI, bo nie łączy się z bazą bezpośrednio
+    command: pytest --ignore=tests/test_pact_verification.py
+    depends_on:
+      - user-service-app-for-test # Upewnij się, że testy startują, gdy aplikacja jest gotowa
+    networks:
+      - test-network
+    volumes:
+      # Mapuj folder ze specyfikacjami z hosta do folderu /specs w kontenerze
+      - ./api-specs:/specs
+
+  # Baza danych do testów
+  user-db-test:
+    image: mongo:5.0
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    networks:
+      - test-network
+      
+  user-service-pact-verifier:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.dev
+    # Mapujemy folder z kontraktami, aby test miał do niego dostęp
+    volumes:
+      - ./services/user-service/pacts:/app/pacts
+    environment:
+      # Podajemy adres do BAZY DANYCH, a nie do aplikacji
+      - MONGO_URI=mongodb://admin:secret@user-db-test:27017/
+      - PYTHONWARNINGS=ignore::PendingDeprecationWarning
+    # Uruchom tylko i wyłącznie nasz nowy test weryfikacyjny
+    command: pytest tests/test_pact_verification.py
+    depends_on:
+      # Upewnij się, że weryfikacja startuje, gdy aplikacja jest gotowa
+      - user-service-app-for-test
+    networks:
+      - test-network
+
+  # Możesz tu zostawić serwis Javy, jeśli chcesz
+  notification-service-tests:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile.dev
+    command: mvn test
+    networks:
+      - test-network
+
+  project-service-tests:
+    build:
+      context: ./services/project-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      # Mapuj kod, ale zostaw node_modules z kontenera
+      - ./services/project-service:/app
+      - /app/node_modules
+    command: npm test
+    environment:
+      - DB_HOST=project-db-test
+      - DB_USER=admin
+      - DB_PASSWORD=secret
+      - DB_NAME=projects_db_test
+    depends_on:
+      - project-db-test
+
+  # NOWA BAZA do testów integracyjnych
+  project-db-test:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=projects_db_test
+
+  frontend-tests:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+
+  e2e-tests:
+    build:
+      context: ./tests-e2e
+    environment:
+      # Wewnątrz sieci Dockera frontend jest dostępny pod nazwą serwisu 'frontend'
+      - BASE_URL=http://frontend
+    # Musimy podłączyć ten kontener do sieci, w której działa frontend!
+    # Domyślna sieć z docker-compose.yml nazywa się zazwyczaj:
+    # <nazwa-folderu>_default. Sprawdź 'docker network ls'.
+    # Zakładając, że folder to prost-o-projekt:
+      - CI=true
+      - DEBUG=pw:api
+    networks:
+      - default 
+      - app-network
+
+
+networks:
+  test-network:
+    driver: bridge
+  app-network:
+    name: prost-o-projekt_default 
+    external: true

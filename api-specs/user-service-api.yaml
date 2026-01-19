@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: User & Auth Service API
+  version: 1.0.0
+paths:
+  /api/auth/register:
+    post:
+      summary: Zarejestruj nowego użytkownika
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Użytkownik utworzony
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api/auth/login:
+    post:
+      summary: Zaloguj użytkownika i uzyskaj token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Pomyślne logowanie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+components:
+  schemas:
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    UserLogin:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+    Token:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, default: "bearer" }

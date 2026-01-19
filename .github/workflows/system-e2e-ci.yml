@@ -1,0 +1,88 @@
+name: System E2E Tests (Dockerized)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "phase-*" ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/workflows/*-cd.yml' 
+      - '.github/workflows/*-ci.yml'
+      - 'docker-compose-prod.yml'
+      
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Tworzymy .env (nadal potrzebny dla aplikacji)
+      - name: Create .env file
+        run: |
+          echo "JWT_SECRET=ci-secret-key-123" > .env
+          # WAŻNE: Wewnątrz sieci Dockera frontend to 'http://frontend', a nie localhost!
+          echo "BASE_URL=http://frontend" >> .env 
+
+      # 2. Uruchamiamy system (Aplikację)
+      # Używamy flagi '-p', aby nazwa sieci była stała: 'prost-o-projekt_default'
+      - name: Start System
+        run: docker compose -p prost-o-projekt up -d --build
+
+      # 3. Czekamy na gotowość (Twój skrypt healthcheck)
+      - name: Wait for Services
+        timeout-minutes: 5
+        run: |
+          echo "Czekam na uruchomienie API Gateway..."
+          # Usuwamy flagę -f. Teraz curl zwróci sukces (exit code 0) nawet przy 404.
+          # Błąd wystąpi tylko, jeśli serwer w ogóle nie odbierze połączenia (Connection Refused).
+          RETRIES=30
+          until curl -s -o /dev/null "http://127.0.0.1:3000"; do
+            echo "Czekam na API Gateway (127.0.0.1:3000)..."
+            sleep 2
+            RETRIES=$((RETRIES-1))
+            if [ $RETRIES -le 0 ]; then
+              echo "BŁĄD: API Gateway nie odpowiada!"
+              docker compose -p prost-o-projekt logs api-gateway
+              exit 1
+            fi
+          done
+          echo "✅ API Gateway odpowiada (nawet jeśli 404)!"
+
+          echo "Czekam na Frontend..."
+          RETRIES=30
+          until curl -s -o /dev/null "http://127.0.0.1:80"; do
+            echo "Czekam na Frontend (127.0.0.1:80)..."
+            sleep 2
+            RETRIES=$((RETRIES-1))
+            if [ $RETRIES -le 0 ]; then
+              echo "BŁĄD: Frontend nie odpowiada!"
+              docker compose -p prost-o-projekt logs frontend
+              exit 1
+            fi
+          done
+          echo "✅ Frontend odpowiada!"
+
+      - name: 🚨 DEBUG - Check Container Status
+        if: failure() || cancelled() # Uruchom, jeśli Wait zawiedzie
+        run: docker compose -p prost-o-projekt ps -a
+
+      - name: 🚨 DEBUG - Dump All Container Logs
+        if: failure() || cancelled()
+        run: docker compose -p prost-o-projekt logs
+      
+      # 4. Uruchamiamy testy E2E (W DOCKERZE)
+      # To jest kluczowa zmiana!
+      # Używamy tego samego 'docker-compose.test.yml' co lokalnie.
+      # Podpinamy się pod ten sam projekt (-p prost-o-projekt), żeby widzieć sieć.
+      - name: Run Playwright Tests (Docker)
+        run: |
+          docker compose -p prost-o-projekt -f docker-compose-test.yml run --rm e2e-tests
+
+      # 5. Logi w razie błędu
+      - name: Dump Docker Logs
+        if: failure()
+        run: docker compose -p prost-o-projekt logs

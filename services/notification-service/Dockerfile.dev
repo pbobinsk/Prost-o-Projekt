@@ -1,0 +1,14 @@
+# Ten obraz zawiera Mavena i JDK - idealny do testowania i kompilacji
+FROM maven:3.8-openjdk-17
+
+WORKDIR /app
+
+# Kopiujemy pom.xml i pobieramy zależności, aby cache'ować warstwę
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# Kopiujemy resztę kodu
+COPY src ./src
+
+# Domyślna komenda, która zostanie nadpisana przez docker-compose run
+CMD ["mvn", "test"]

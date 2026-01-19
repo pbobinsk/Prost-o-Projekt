@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+motor
+bcrypt
+python-jose[cryptography]
+pydantic[email]
+python-dotenv
+pika
+pytest
+httpx
+asgi-lifespan
+pyyaml
+jsonschema 
+openapi-spec-validator
+openapi-schema-validator
+pact-python
