@@ -1,0 +1,60 @@
+name: Frontend CD (Build & Publish)
+
+on:
+  push:
+    # ZMIANA: Dodajemy Twoją gałąź roboczą, żeby przetestować workflow
+    branches: [ "main", "phase-*" ] 
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-cd.yml'
+  
+  # Opcjonalnie: Pozwól uruchomić ręcznie przyciskiem
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: pbobinsk/prost-o-projekt-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Logowanie do rejestru
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Generowanie tagów (Smart Tagging)
+      # To jest kluczowy moment!
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Taguj nazwą gałęzi (np. :main, :phase-6-cicd)
+            type=ref,event=branch
+            # Taguj hashem commita (dla precyzji)
+            type=sha
+            # Taguj :latest TYLKO jeśli to gałąź domyślna (main)
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # 3. Budowanie i wypychanie
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          # Używamy tagów wygenerowanych w kroku 'meta'
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
