@@ -102,9 +102,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
 
   notification-service:
-    build:
-      image: ghcr.io/pbobinsk/prost-o-projekt-notification-service:sha-37ee737
-      dockerfile: Dockerfile
+    image: ghcr.io/pbobinsk/prost-o-projekt-notification-service:sha-37ee737
     container_name: prost-o-projekt-notification-service
     restart: always
     depends_on:
