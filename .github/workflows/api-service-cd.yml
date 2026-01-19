@@ -1,19 +1,19 @@
-name: API Service CD (Build & Publish)
+name: API Gateway CD (Build & Publish)
 
 on:
   push:
     # ZMIANA: Dodajemy Twoją gałąź roboczą, żeby przetestować workflow
     branches: [ "main", "phase-*" ] 
     paths:
-      - 'services/api-service/**'
-      - '.github/workflows/api-service-cd.yml'
+      - 'services/api-gateway/**'
+      - '.github/workflows/api-gateway-cd.yml'
   
   # Opcjonalnie: Pozwól uruchomić ręcznie przyciskiem
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: pbobinsk/prost-o-projekt-api-service
+  IMAGE_NAME: pbobinsk/prost-o-projekt-api-gateway
 
 jobs:
   build-and-push:
@@ -53,7 +53,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/api-service
+          context: ./services/api-gateway
           push: true
           # Używamy tagów wygenerowanych w kroku 'meta'
           tags: ${{ steps.meta.outputs.tags }}
